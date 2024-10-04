@@ -54,12 +54,15 @@ func listOfBuckets(w http.ResponseWriter) error {
 
 	var buckets []model.Bucket
 	for _, record := range records[1:] {
-		if len(record) >= 3 {
+		if len(record) >= 4 {
 			buckets = append(buckets, model.Bucket{
-				CreationDate: record[0],
-				Name:         record[1],
+				Name:         record[0],
+				CreationDate: record[1],
 				LastModified: record[2],
+				Status:       record[3],
 			})
+		} else {
+			fmt.Println("in record less than 4 columns")
 		}
 	}
 	response := model.BucketResponse{Buckets: buckets}

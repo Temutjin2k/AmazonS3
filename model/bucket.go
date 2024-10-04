@@ -3,9 +3,10 @@ package model
 import "encoding/xml"
 
 type Bucket struct {
-	CreationDate string `xml:"CreationDate"`
 	Name         string `xml:"Name"`
+	CreationDate string `xml:"CreationDate"`
 	LastModified string `xml:"LastModified"`
+	Status       string `xml:"Status"`
 }
 
 type BucketResponse struct {
