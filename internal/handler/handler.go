@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
 	"triple-s/model"
 )
 
@@ -20,27 +19,40 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err)
 		}
+	case "DELETE":
+		if r.URL.Path == "" {
+			http.Error(w, "Error deleting bucket", http.StatusInternalServerError)
+		}
+		path := "./data" + r.URL.Path
+		fmt.Println("Removing directory", path)
+
+		err := os.RemoveAll(path)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Fprintf(w, "Bucket deleted successfully: %v", path)
 	}
 }
 
 func createBucket(w http.ResponseWriter, urlPath string) {
-	folderName := "./data" + urlPath
-	err := os.Mkdir(folderName, 0o700) // 0755/0700 is the permission mode
+	bucketName := "./data" + urlPath
+	err := os.Mkdir(bucketName, 0o755) // 0755/0700 is the permission mode
 	if err != nil {
 		if os.IsExist(err) {
-			http.Error(w, "Folder already exists", http.StatusConflict) // 409 Conflict
+			http.Error(w, "Bucket already exists", http.StatusConflict) // 409 Conflict
 		} else {
-			http.Error(w, fmt.Sprintf("Error creating folder: %v", err), http.StatusInternalServerError) // 500 Internal Server Error
+			http.Error(w, fmt.Sprintf("Error creating Bucket: %v", err), http.StatusInternalServerError) // 500 Internal Server Error
 		}
 	} else {
-		fmt.Fprintf(w, "Folder created successfully: %v", folderName)
+		fmt.Fprintf(w, "Bucket created successfully: %v", bucketName)
 	}
 }
 
 func listOfBuckets(w http.ResponseWriter) error {
 	file, err := os.Open("data/buckets.csv")
 	if err != nil {
-		http.Error(w, "Failed to open CSV file", http.StatusInternalServerError)
+		http.Error(w, "Failed to open metadata file", http.StatusInternalServerError)
 		return err
 	}
 	defer file.Close()
@@ -48,7 +60,7 @@ func listOfBuckets(w http.ResponseWriter) error {
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll() // All records from buckets.csv
 	if err != nil {
-		http.Error(w, "Failed to read CSV file", http.StatusInternalServerError)
+		http.Error(w, "Failed to read metadata file", http.StatusInternalServerError)
 		return err
 	}
 
