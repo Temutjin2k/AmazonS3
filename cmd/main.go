@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"triple-s/internal/handler"
-	"triple-s/internal/utils"
+	"triple-s/utils"
 )
 
 func main() {
