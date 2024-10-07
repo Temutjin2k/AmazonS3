@@ -23,7 +23,11 @@ func main() {
 		os.Exit(0)
 	}
 	config.Dir = "./" + *dirFlag
-	// utils.MakeDir(config.Dir)
+	err := utils.MakeDir(config.Dir)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	port := fmt.Sprintf(":%d", *portFlag)
 	url := "http://localhost" + port + "/"
