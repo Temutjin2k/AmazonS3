@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"triple-s/config"
 	"triple-s/internal/handler"
 	"triple-s/utils"
 )
@@ -21,7 +22,9 @@ func main() {
 		utils.PrintHelp()
 		os.Exit(0)
 	}
-	utils.Dir = "./" + *dirFlag
+	config.Dir = "./" + *dirFlag
+	// utils.MakeDir(config.Dir)
+
 	port := fmt.Sprintf(":%d", *portFlag)
 	url := "http://localhost" + port + "/"
 

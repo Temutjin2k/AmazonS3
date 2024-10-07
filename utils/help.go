@@ -2,8 +2,6 @@ package utils
 
 import "fmt"
 
-var Dir string // Storing Directory flag
-
 func PrintHelp() {
 	helpMessage := `Simple Storage Service.
 

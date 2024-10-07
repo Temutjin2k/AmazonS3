@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"triple-s/config"
 	"triple-s/internal/model"
 )
 
@@ -33,7 +34,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createBucket(w http.ResponseWriter, urlPath string) {
-	bucketName := "./data" + urlPath
+	bucketName := config.Dir + urlPath
 	err := os.Mkdir(bucketName, 0o755) // 0755/0700 is the permission mode
 	if err != nil {
 		if os.IsExist(err) {
@@ -48,8 +49,7 @@ func createBucket(w http.ResponseWriter, urlPath string) {
 	}
 
 	// Creating objects.csv for storing metadata
-	fmt.Println(bucketName)
-	err = os.WriteFile(bucketName+"/objects.csv", []byte("ObjectKey,Size,ContentType,LastModified"), 0o755)
+	err = os.WriteFile(bucketName+"/objects.csv", config.ObjectMetadataFields, 0o755)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error creating metadata: %v", err), http.StatusInternalServerError)
 		fmt.Println(err)
@@ -57,7 +57,8 @@ func createBucket(w http.ResponseWriter, urlPath string) {
 }
 
 func listOfBuckets(w http.ResponseWriter) error {
-	file, err := os.Open("data/buckets.csv")
+	metadataDir := config.Dir + "/buckets.csv"
+	file, err := os.Open(metadataDir)
 	if err != nil {
 		http.Error(w, "Failed to open metadata file", http.StatusInternalServerError)
 		return err
@@ -99,7 +100,7 @@ func deleteBucket(w http.ResponseWriter, urlPath string) error {
 		http.Error(w, "Error deleting bucket", http.StatusBadRequest)
 		return ErrInvalidPath
 	}
-	path := "./data" + urlPath
+	path := config.Dir + urlPath
 	fmt.Println("Removing directory", path)
 	// Check if path exists
 	info, err := os.Stat(path)
