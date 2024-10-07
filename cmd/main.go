@@ -13,7 +13,7 @@ import (
 
 func main() {
 	portFlag := flag.Int("port", 8080, "Port number")
-	dirFlag := flag.String("dir", "", "Path to the directory")
+	dirFlag := flag.String("dir", "data", "Path to the directory")
 	helpFlap := flag.Bool("help", false, "Help flag")
 	flag.Parse()
 
@@ -21,12 +21,12 @@ func main() {
 		utils.PrintHelp()
 		os.Exit(0)
 	}
-
-	address := fmt.Sprintf(":%d", *portFlag)
-	url := "http://localhost" + address + "/" + *dirFlag
+	utils.Dir = "./" + *dirFlag
+	port := fmt.Sprintf(":%d", *portFlag)
+	url := "http://localhost" + port + "/" + *dirFlag
 
 	fmt.Printf("Starting server on port: %v\nURL: %v\n", *portFlag, url)
 
 	http.HandleFunc("/", handler.Handler)
-	log.Fatal(http.ListenAndServe(address, nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 }
