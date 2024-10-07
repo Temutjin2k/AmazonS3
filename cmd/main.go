@@ -23,7 +23,7 @@ func main() {
 	}
 	utils.Dir = "./" + *dirFlag
 	port := fmt.Sprintf(":%d", *portFlag)
-	url := "http://localhost" + port + "/" + *dirFlag
+	url := "http://localhost" + port + "/"
 
 	fmt.Printf("Starting server on port: %v\nURL: %v\n", *portFlag, url)
 
