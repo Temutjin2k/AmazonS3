@@ -12,6 +12,24 @@ import (
 	"triple-s/utils"
 )
 
+func bucketHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "PUT": // Create bucket Endpoint: "/{BucketName}"
+		err := createBucket(w, r.URL.Path)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	case "DELETE":
+		err := deleteBucket(w, r.URL.Path)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "Could not handle method: %v", r.Method)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func createBucket(w http.ResponseWriter, urlPath string) error {
 	bucketPath := config.Dir + urlPath
 	bucketName := urlPath[1:]
