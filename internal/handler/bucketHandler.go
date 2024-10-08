@@ -12,20 +12,23 @@ import (
 	"triple-s/utils"
 )
 
-func createBucket(w http.ResponseWriter, urlPath string) {
+func createBucket(w http.ResponseWriter, urlPath string) error {
 	bucketPath := config.Dir + urlPath
 	bucketName := urlPath[1:]
-	isBucketExist := utils.SearchValueCSV(config.Dir+"/buckets.csv", 0, bucketName)
-	if isBucketExist {
-		http.Error(w, "Bucket already exists", http.StatusConflict) // 409 Conflict
-		return
-	}
-	err := os.Mkdir(bucketPath, 0o755) // 0755/0700 is the permission mode
+	isBucketExist, err := utils.SearchValueCSV(config.Dir+"/buckets.csv", "Name", bucketName)
 	if err != nil {
 		http.Error(w, "Error creating Bucket", http.StatusInternalServerError) // 500 Internal Server Error
-		return
-	} else {
-		fmt.Fprint(w, "Bucket created successfully")
+		return err
+	}
+
+	if isBucketExist {
+		http.Error(w, "Bucket already exists", http.StatusConflict) // 409 Conflict
+		return config.ErrBucketExists
+	}
+	err = os.Mkdir(bucketPath, 0o755) // 0755/0700 is the permission mode
+	if err != nil {
+		http.Error(w, "Error creating Bucket", http.StatusInternalServerError) // 500 Internal Server Error
+		return err
 	}
 
 	// Creating objects.csv for storing metadata
@@ -33,14 +36,22 @@ func createBucket(w http.ResponseWriter, urlPath string) {
 	err = os.WriteFile(newObjectsMetadataPath, config.ObjectMetadataFields, 0o755)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error creating metadata: %v", err), http.StatusInternalServerError)
-		fmt.Println(err)
+		return err
 	}
 
+	// Writing metadata to buckets.csv
 	newBucketMetadata := []string{bucketName, utils.GetCurrentTimeStamp(), utils.GetCurrentTimeStamp(), "active"}
-	utils.AddRowToCSV(config.Dir+"/buckets.csv", newBucketMetadata)
+	err = utils.AddRowToCSV(config.Dir+"/buckets.csv", newBucketMetadata)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(w, "Bucket created successfully")
+	return nil
 }
 
 func listOfBuckets(w http.ResponseWriter) error {
+	fmt.Println("Returning List Of Buckets")
 	metadataDir := config.Dir + "/buckets.csv"
 	file, err := os.Open(metadataDir)
 	if err != nil {
@@ -82,31 +93,61 @@ func listOfBuckets(w http.ResponseWriter) error {
 func deleteBucket(w http.ResponseWriter, urlPath string) error {
 	if urlPath == "/" {
 		http.Error(w, "Error deleting bucket", http.StatusBadRequest)
-		return ErrInvalidPath
+		return config.ErrInvalidPath
 	}
-	path := config.Dir + urlPath
-	fmt.Println("Removing directory", path)
+	bucketPath := config.Dir + urlPath
+	fmt.Println("Removing bucket", bucketPath)
+
 	// Check if path exists
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		http.Error(w, "Path does not exist", http.StatusNotFound)
+	metadataDir := config.Dir + "/buckets.csv"
+	isBucketExist, err := utils.SearchValueCSV(metadataDir, "Name", urlPath[1:])
+	if err != nil {
+		http.Error(w, "Error creating Bucket", http.StatusInternalServerError) // 500 Internal Server Error
 		return err
-	} else if err != nil {
+	}
+
+	if !isBucketExist {
+		http.Error(w, "Bucket does not exists", http.StatusConflict) // 409 Conflict
+		return config.ErrBucketDoesNotExist
+	}
+
+	info, err := os.Stat(bucketPath)
+	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Error checking path", http.StatusInternalServerError)
+		http.Error(w, "Error checking bucket", http.StatusInternalServerError)
 		return err
 	}
 
 	if !info.IsDir() {
-		http.Error(w, "Path is not a directory", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v is not Bucket", urlPath), http.StatusBadRequest)
 		return err
 	}
 
-	err = os.RemoveAll(path)
+	// Check if any object exist in this bucket
+	col, err := utils.GetColumn(bucketPath+"/objects.csv", 0)
 	if err != nil {
-		http.Error(w, "error", http.StatusInternalServerError)
+		http.Error(w, "Error deleting bucket", http.StatusBadRequest)
 		return err
 	}
-	fmt.Fprintf(w, "Bucket deleted successfully: %v", path)
+	if len(col) > 1 {
+		http.Error(w, "Bucket is not empty", http.StatusBadRequest)
+		return nil
+	}
+
+	// Removing bucket
+	err = os.RemoveAll(bucketPath)
+	if err != nil {
+		http.Error(w, "Could not delete bucket", http.StatusInternalServerError)
+		return err
+	}
+
+	// Updating metadata(buckets.csv)
+	err = utils.DeleteRow(metadataDir, urlPath[1:])
+	if err != nil {
+		fmt.Fprint(os.Stderr, "Error updating metadata, ERROR:")
+		return err
+	}
+
+	fmt.Fprintf(w, "Bucket deleted successfully: %v", urlPath[1:])
 	return nil
 }
