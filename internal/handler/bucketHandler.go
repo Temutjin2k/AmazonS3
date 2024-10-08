@@ -9,29 +9,35 @@ import (
 
 	"triple-s/config"
 	"triple-s/internal/model"
+	"triple-s/utils"
 )
 
 func createBucket(w http.ResponseWriter, urlPath string) {
-	bucketName := config.Dir + urlPath
-	err := os.Mkdir(bucketName, 0o755) // 0755/0700 is the permission mode
+	bucketPath := config.Dir + urlPath
+	bucketName := urlPath[1:]
+	isBucketExist := utils.SearchValueCSV(config.Dir+"/buckets.csv", 0, bucketName)
+	if isBucketExist {
+		http.Error(w, "Bucket already exists", http.StatusConflict) // 409 Conflict
+		return
+	}
+	err := os.Mkdir(bucketPath, 0o755) // 0755/0700 is the permission mode
 	if err != nil {
-		if os.IsExist(err) {
-			http.Error(w, "Bucket already exists", http.StatusConflict) // 409 Conflict
-			return
-		} else {
-			http.Error(w, fmt.Sprintf("Error creating Bucket: %v", err), http.StatusInternalServerError) // 500 Internal Server Error
-			return
-		}
+		http.Error(w, "Error creating Bucket", http.StatusInternalServerError) // 500 Internal Server Error
+		return
 	} else {
 		fmt.Fprint(w, "Bucket created successfully")
 	}
 
 	// Creating objects.csv for storing metadata
-	err = os.WriteFile(bucketName+"/objects.csv", config.ObjectMetadataFields, 0o755)
+	newObjectsMetadataPath := bucketPath + "/objects.csv"
+	err = os.WriteFile(newObjectsMetadataPath, config.ObjectMetadataFields, 0o755)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error creating metadata: %v", err), http.StatusInternalServerError)
 		fmt.Println(err)
 	}
+
+	newBucketMetadata := []string{bucketName, utils.GetCurrentTimeStamp(), utils.GetCurrentTimeStamp(), "active"}
+	utils.AddRowToCSV(config.Dir+"/buckets.csv", newBucketMetadata)
 }
 
 func listOfBuckets(w http.ResponseWriter) error {
