@@ -18,7 +18,7 @@ func main() {
 	helpFlap := flag.Bool("help", false, "Help flag")
 	flag.Parse()
 
-	if *helpFlap || !utils.ValidateFlags(*portFlag, *dirFlag) {
+	if *helpFlap {
 		utils.PrintHelp()
 		os.Exit(0)
 	}
