@@ -9,15 +9,15 @@ import (
 	"triple-s/config"
 )
 
+// Validates Url and also returns what command is it, is bucketName/ObjectName valid and error message
 func ValidateURL(url string) (string, bool, error) {
 	commandType := ""
 	if url == "/" {
 		return config.HandlerBucketList, true, nil
 	}
-	endPoints := strings.Split(url[1:], "/")
-	if len(endPoints) > 2 {
-		return "", false, fmt.Errorf("wrong endpoint")
-	}
+
+	url = strings.Trim(url, "/")
+	endPoints := strings.Split(url, "/")
 
 	switch len(endPoints) {
 	case 1:
@@ -29,14 +29,14 @@ func ValidateURL(url string) (string, bool, error) {
 		if !isValid {
 			return "", false, err
 		}
+	default:
+		return "", false, config.ErrNotFound
 	}
 
 	isValid, err := isValidBucketName(endPoints[0])
 	if !isValid {
 		return "", false, err
 	}
-
-	fmt.Println(endPoints)
 	return commandType, true, nil
 }
 
