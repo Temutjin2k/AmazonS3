@@ -34,6 +34,7 @@ func objectHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	case http.MethodGet:
+		fmt.Println("get")
 		err := retrieveObject(w, bucketName, objectKey)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -94,8 +95,36 @@ func uploadObject(w http.ResponseWriter, r *http.Request, bucketName, objectKey 
 
 func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 	if exists, err := utils.IsObjectExist(bucketName, objectKey); !exists {
-		fmt.Fprintln(os.Stderr, err)
 		http.Error(w, "Object does not exists", http.StatusBadRequest)
+		return err
+	}
+	// Define the path to the object
+	objectPath := filepath.Join("./data", bucketName, objectKey)
+
+	// Open the file
+	file, err := os.Open(objectPath)
+	if err != nil {
+		http.Error(w, "Could not open object", http.StatusInternalServerError)
+		return err
+	}
+	defer file.Close()
+
+	// Set the Content-Type header
+	metadata, err := utils.GetRow(filepath.Join("./data", bucketName, "objects.csv"), "ObjectKey", objectKey)
+	if err != nil {
+		http.Error(w, "Could not open object", http.StatusInternalServerError)
+		return err
+	}
+	contentLength := metadata[1]
+	contentType := metadata[2]
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", contentLength)
+	w.WriteHeader(http.StatusOK)
+
+	// Copy the file content to the response writer
+	if _, err := io.Copy(w, file); err != nil {
+		http.Error(w, "Could not send object", http.StatusInternalServerError)
 		return err
 	}
 	return nil
