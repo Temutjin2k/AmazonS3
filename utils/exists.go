@@ -10,7 +10,7 @@ func IsBucketExist(bucket string) (bool, error) {
 		return false, err
 	}
 	if !isBucketExist {
-		return false, config.ErrBucketExists
+		return false, config.ErrBucketDoesNotExist
 	}
 	return true, nil
 }
