@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Search value in CSV file, return rows index and boolean isExist. Returns (-1, false) if target string was not found. This func skips first row
+// Search value in CSV file, return boolean isExist and error. Returns false if target string was not found. This func skips first row
 func SearchValueCSV(filepath string, colName string, target string) (bool, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -133,6 +133,38 @@ func GetColumn(filepath string, col int) ([]string, error) {
 	}
 
 	return columnValues, nil
+}
+
+func GetRow(filepath, targetCol, targetValue string) ([]string, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	targetColIndex := -1
+	for i, field := range records[0] {
+		if strings.TrimSpace(field) == strings.TrimSpace(targetCol) {
+			targetColIndex = i
+			break
+		}
+	}
+	if targetColIndex == -1 {
+		return nil, errors.New("no such column")
+	}
+
+	for _, record := range records[1:] {
+		if record[targetColIndex] == targetValue {
+			return record, nil
+		}
+	}
+	return nil, errors.New("could not find row")
 }
 
 // Updates old value with newVal where targetRow equal to first field in the row
