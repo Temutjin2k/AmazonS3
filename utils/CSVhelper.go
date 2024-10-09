@@ -81,7 +81,8 @@ func DeleteRow(filepath string, target string) error {
 	var updatedRecords [][]string
 
 	// Filter out the rows that have the target in the first column
-	for _, record := range records {
+	updatedRecords = append(updatedRecords, records[0])
+	for _, record := range records[1:] {
 		if len(record) > 0 && record[0] != target {
 			updatedRecords = append(updatedRecords, record)
 		}
