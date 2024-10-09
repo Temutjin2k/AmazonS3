@@ -22,7 +22,6 @@ func bucketHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	default:
-		fmt.Fprintf(os.Stderr, "Could not handle method: %v", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }

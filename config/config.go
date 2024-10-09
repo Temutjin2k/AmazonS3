@@ -14,4 +14,5 @@ var (
 	ErrBucketExists       = errors.New("bucket already exists")
 	ErrBucketDoesNotExist = errors.New("bucket does not exists")
 	ErrInvalidPath        = errors.New("error deleting bucket")
+	ErrNotFound           = errors.New("not Found")
 )
