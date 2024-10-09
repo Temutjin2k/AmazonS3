@@ -13,6 +13,8 @@ var (
 
 	ErrBucketExists       = errors.New("bucket already exists")
 	ErrBucketDoesNotExist = errors.New("bucket does not exists")
+	ErrObjectDoesNotExist = errors.New("object does not exists")
 	ErrInvalidPath        = errors.New("error deleting bucket")
-	ErrNotFound           = errors.New("not Found")
+	ErrNotFound           = errors.New("not found")
+	ErrIvalidFormat       = errors.New("invalid URL format. Expected /{BucketName}/{ObjectKey}")
 )
