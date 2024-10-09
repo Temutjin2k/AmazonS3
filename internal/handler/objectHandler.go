@@ -141,5 +141,10 @@ func deleteObject(w http.ResponseWriter, bucketName, objectKey string) error {
 		return err
 	}
 
+	err = utils.DeleteRow(filepath.Join(config.Dir, bucketName, "objects.csv"), objectKey)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(w, "Object deleted successfully")
 	return nil
 }
