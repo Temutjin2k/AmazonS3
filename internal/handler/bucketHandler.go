@@ -11,12 +11,12 @@ import (
 
 func bucketHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "PUT": // Create bucket Endpoint: "/{BucketName}"
+	case http.MethodPut: // Create bucket Endpoint: "/{BucketName}"
 		err := createBucket(w, r.URL.Path)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-	case "DELETE":
+	case http.MethodDelete:
 		err := deleteBucket(w, r.URL.Path)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

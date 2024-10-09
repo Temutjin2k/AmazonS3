@@ -14,7 +14,7 @@ import (
 // List All Buckets Endpoint: "/"
 func bucketListHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		err := listOfBuckets(w)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
