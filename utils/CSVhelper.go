@@ -47,8 +47,8 @@ func SearchValueCSV(filepath string, colName string, target string) (bool, error
 	return false, nil
 }
 
-func AddRowToCSV(filename string, record []string) error {
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+func AddRowToCSV(filepath string, record []string) error {
+	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -65,8 +65,8 @@ func AddRowToCSV(filename string, record []string) error {
 }
 
 // Delete row by compating target value with first column
-func DeleteRow(filename string, target string) error {
-	file, err := os.Open(filename)
+func DeleteRow(filepath string, target string) error {
+	file, err := os.Open(filepath)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func DeleteRow(filename string, target string) error {
 		return errors.New("no matching row found to delete")
 	}
 
-	file, err = os.Create(filename)
+	file, err = os.Create(filepath)
 	if err != nil {
 		return err
 	}
@@ -133,4 +133,55 @@ func GetColumn(filepath string, col int) ([]string, error) {
 	}
 
 	return columnValues, nil
+}
+
+// Updates old value with newVal where targetRow equal to first field in the row
+func UpdateField(filepath, targetRow, col, newValue string) error {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	targetCol := -1
+	for i, v := range records[0] {
+		if v == col {
+			targetCol = i
+			break
+		}
+	}
+
+	var updatedRecords [][]string
+	// Updating records
+	for i, record := range records {
+		if len(record) > 0 && record[0] != targetRow {
+			updatedRecords = append(updatedRecords, record)
+		} else {
+			newRecord := records[i]
+			newRecord[targetCol] = newValue
+			updatedRecords = append(updatedRecords, newRecord)
+			break
+		}
+	}
+
+	file, err = os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the updated records back to the file
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	if err := writer.WriteAll(updatedRecords); err != nil {
+		return err
+	}
+	return nil
 }

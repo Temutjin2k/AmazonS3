@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"triple-s/config"
 	"triple-s/utils"
 )
 
@@ -49,15 +50,14 @@ func objectHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadObject(w http.ResponseWriter, r *http.Request, bucketName, objectKey string) error {
 	if exists, err := utils.IsObjectExist(bucketName, objectKey); exists {
-		fmt.Fprintln(os.Stderr, err)
 		http.Error(w, "Object already exists", http.StatusBadRequest)
 		return err
 	}
 
-	bucketPath := filepath.Join("./data", bucketName)
+	bucketPath := filepath.Join(config.Dir, bucketName)
 	// Create the destination file
-	filePath := filepath.Join(bucketPath, objectKey)
-	outFile, err := os.Create(filePath)
+	file := filepath.Join(bucketPath, objectKey)
+	outFile, err := os.Create(file)
 	if err != nil {
 		http.Error(w, "Could not create object", http.StatusInternalServerError)
 		return err
@@ -71,6 +71,23 @@ func uploadObject(w http.ResponseWriter, r *http.Request, bucketName, objectKey 
 		return err
 	}
 
+	// Get Content-Type and Content-Length
+	contentType := r.Header.Get("Content-Type")
+	contentLength := fmt.Sprint(r.ContentLength)
+
+	// Adding new metadata to object.csv
+	newBucketMetadata := []string{objectKey, contentLength, contentType, utils.GetCurrentTimeStamp()}
+	err = utils.AddRowToCSV(filepath.Join(bucketPath, "objects.csv"), newBucketMetadata)
+	if err != nil {
+		return err
+	}
+
+	// Updating bucket.csv LastModifiedTime
+	err = utils.UpdateField(filepath.Join(config.Dir, "buckets.csv"), bucketName, "LastModifiedTime", utils.GetCurrentTimeStamp())
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintln(w, "Object Created successfully")
 	return nil
 }
@@ -78,7 +95,7 @@ func uploadObject(w http.ResponseWriter, r *http.Request, bucketName, objectKey 
 func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 	if exists, err := utils.IsObjectExist(bucketName, objectKey); !exists {
 		fmt.Fprintln(os.Stderr, err)
-		http.Error(w, "Object does not already exists", http.StatusBadRequest)
+		http.Error(w, "Object does not exists", http.StatusBadRequest)
 		return err
 	}
 	return nil
