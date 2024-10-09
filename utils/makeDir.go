@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 
 	"triple-s/config"
@@ -16,8 +15,7 @@ func MakeDir(path string) error {
 		return err
 	}
 
-	// Creating buckets.csv to store metadata of buckets
-	fmt.Println("err")
+	// Creating buckets.csv to store metadata of bucket
 	err = os.WriteFile(path+"/buckets.csv", config.BucketMetadataFields, 0o755)
 	if err != nil {
 		return err
