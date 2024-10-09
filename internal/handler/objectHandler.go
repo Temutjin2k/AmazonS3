@@ -34,13 +34,12 @@ func objectHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	case http.MethodGet:
-		fmt.Println("get")
 		err := retrieveObject(w, bucketName, objectKey)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	case http.MethodDelete:
-		err := deleteObject()
+		err := deleteObject(w, bucketName, objectKey)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
@@ -99,7 +98,7 @@ func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 		return err
 	}
 	// Define the path to the object
-	objectPath := filepath.Join("./data", bucketName, objectKey)
+	objectPath := filepath.Join(config.Dir, bucketName, objectKey)
 
 	// Open the file
 	file, err := os.Open(objectPath)
@@ -110,7 +109,7 @@ func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 	defer file.Close()
 
 	// Set the Content-Type header
-	metadata, err := utils.GetRow(filepath.Join("./data", bucketName, "objects.csv"), "ObjectKey", objectKey)
+	metadata, err := utils.GetRow(filepath.Join(config.Dir, bucketName, "objects.csv"), "ObjectKey", objectKey)
 	if err != nil {
 		http.Error(w, "Could not open object", http.StatusInternalServerError)
 		return err
@@ -130,6 +129,17 @@ func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 	return nil
 }
 
-func deleteObject() error {
+func deleteObject(w http.ResponseWriter, bucketName, objectKey string) error {
+	if exists, err := utils.IsObjectExist(bucketName, objectKey); !exists {
+		http.Error(w, "Object does not exists", http.StatusBadRequest)
+		return err
+	}
+
+	err := os.Remove(filepath.Join(config.Dir, bucketName, objectKey))
+	if err != nil {
+		http.Error(w, "Could not delete object", http.StatusInternalServerError)
+		return err
+	}
+
 	return nil
 }

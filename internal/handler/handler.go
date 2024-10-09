@@ -9,6 +9,9 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PUT" && r.Method != "GET" && r.Method != "DELETE" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 	commandType, isValid, err := utils.ValidateURL(r.URL.Path)
 	if !isValid {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusNotFound)
