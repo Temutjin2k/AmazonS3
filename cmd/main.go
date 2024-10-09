@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"triple-s/config"
 	"triple-s/internal/handler"
@@ -22,7 +23,16 @@ func main() {
 		utils.PrintHelp()
 		os.Exit(0)
 	}
-	config.Dir = "./" + *dirFlag
+
+	if (*dirFlag)[0] != '/' {
+		config.Dir = "./" + *dirFlag
+	} else {
+		config.Dir = *dirFlag
+	}
+
+	config.Dir = filepath.Clean(config.Dir)
+	fmt.Println("Created directory to store buckets in", config.Dir)
+
 	err := utils.MakeDir(config.Dir)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)

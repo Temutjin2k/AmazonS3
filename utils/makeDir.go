@@ -7,7 +7,7 @@ import (
 )
 
 func MakeDir(path string) error {
-	err := os.Mkdir(path, 0o755)
+	err := os.MkdirAll(path, 0o755)
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
