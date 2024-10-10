@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"triple-s/config"
 	"triple-s/internal/model"
@@ -25,8 +26,7 @@ func bucketListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listOfBuckets(w http.ResponseWriter) error {
-	fmt.Println("Returning List Of Buckets")
-	metadataDir := config.Dir + "/buckets.csv"
+	metadataDir := filepath.Join(config.Dir, "/buckets.csv")
 	file, err := os.Open(metadataDir)
 	if err != nil {
 		http.Error(w, "Failed to open metadata file", http.StatusInternalServerError)
