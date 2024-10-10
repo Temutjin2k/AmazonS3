@@ -119,7 +119,6 @@ func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", contentLength)
-	w.WriteHeader(http.StatusOK)
 
 	// Copy the file content to the response writer
 	if _, err := io.Copy(w, file); err != nil {
@@ -140,11 +139,18 @@ func deleteObject(w http.ResponseWriter, bucketName, objectKey string) error {
 		http.Error(w, "Could not delete object", http.StatusInternalServerError)
 		return err
 	}
-
+	// Updating object metadata
 	err = utils.DeleteRow(filepath.Join(config.Dir, bucketName, "objects.csv"), objectKey)
 	if err != nil {
 		return err
 	}
+
+	// Updating Buckets metadata LastModifiedTime
+	err = utils.UpdateField(filepath.Join(config.Dir, "buckets.csv"), bucketName, "LastModifiedTime", utils.GetCurrentTimeStamp())
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintln(w, "Object deleted successfully")
 	return nil
 }
