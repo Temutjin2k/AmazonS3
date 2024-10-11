@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/csv"
-	"encoding/xml"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,35 +9,46 @@ import (
 
 	"triple-s/config"
 	"triple-s/internal/model"
+	"triple-s/utils"
 )
 
 // List All Buckets Endpoint: "/"
 func bucketListHandler(w http.ResponseWriter, r *http.Request) {
+	var response model.XMLResponse
 	switch r.Method {
 	case http.MethodGet:
-		err := listOfBuckets(w)
+		response, err := listOfBuckets(w)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
+			response.Resource = r.URL.Path
+			utils.SendXmlResponse(w, response)
 		}
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		response.Status = http.StatusMethodNotAllowed
+		response.Message = "Method not allowed"
+		response.Resource = r.URL.Path
+		utils.SendXmlResponse(w, response)
 	}
 }
 
-func listOfBuckets(w http.ResponseWriter) error {
+func listOfBuckets(w http.ResponseWriter) (model.XMLResponse, error) {
+	var response model.XMLResponse
+
 	metadataDir := filepath.Join(config.Dir, "/buckets.csv")
 	file, err := os.Open(metadataDir)
 	if err != nil {
-		http.Error(w, "Failed to open metadata file", http.StatusInternalServerError)
-		return err
+		response.Status = http.StatusInternalServerError
+		response.Message = "Failed to open metadata file"
+		return response, err
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll() // All records from buckets.csv
 	if err != nil {
-		http.Error(w, "Failed to read metadata file", http.StatusInternalServerError)
-		return err
+		response.Status = http.StatusInternalServerError
+		response.Message = "Failed to open metadata file"
+		return response, err
 	}
 
 	var buckets []model.Bucket
@@ -51,15 +61,12 @@ func listOfBuckets(w http.ResponseWriter) error {
 				Status:       record[3],
 			})
 		} else {
-			fmt.Println("in record less than 4 columns")
+			fmt.Fprintln(os.Stderr, "ListOFBuckets: in record less than 4 columns")
 		}
 	}
-	response := model.BucketResponse{Buckets: buckets}
-	w.Header().Set("Content-Type", "application/xml")
+	// Responsing buckets
+	bucketResponse := model.BucketResponse{Buckets: buckets}
+	utils.SendXmlListResponse(w, bucketResponse)
 
-	// Encode the response to XML
-	if err := xml.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Failed to encode XML response", http.StatusInternalServerError)
-	}
-	return nil
+	return model.XMLResponse{}, nil
 }
