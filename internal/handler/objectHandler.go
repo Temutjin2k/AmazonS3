@@ -49,11 +49,6 @@ func objectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadObject(w http.ResponseWriter, r *http.Request, bucketName, objectKey string) error {
-	if exists, err := utils.IsObjectExist(bucketName, objectKey); exists {
-		http.Error(w, "Object already exists", http.StatusBadRequest)
-		return err
-	}
-
 	bucketPath := filepath.Join(config.Dir, bucketName)
 	// Create the destination file
 	file := filepath.Join(bucketPath, objectKey)
