@@ -24,19 +24,25 @@ func PrintHelp() {
 }
 
 func MakeDir(path string) error {
-	if _, err := os.Stat(path); err == nil {
-		return nil
-	}
-	err := os.MkdirAll(path, 0o755)
-	if err != nil {
-		return err
+	// Check if the directory exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		// If the directory does not exist, create it
+		err := os.MkdirAll(path, 0o755)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Creating buckets.csv to store metadata of bucket
-	err = os.WriteFile(path+"/buckets.csv", config.BucketMetadataFields, 0o755)
-	if err != nil {
-		return err
+	// Check if the metadata file exists
+	metadataPath := path + "/buckets.csv"
+	if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
+		// If the metadata file does not exist, create it
+		err := os.WriteFile(metadataPath, config.BucketMetadataFields, 0o755)
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
