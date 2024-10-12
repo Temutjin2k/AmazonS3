@@ -63,7 +63,8 @@ func isValidBucketName(name string) (bool, error) {
 	}
 
 	// Cannot be formatted as an IP address
-	ipAddressRegex := `^(\d{1,3}\.){3}\d{1,3}$`
+	ipAddressRegex := `^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`
+
 	if regexp.MustCompile(ipAddressRegex).MatchString(name) {
 		return false, fmt.Errorf("bucket name cannot be formatted as an IP address")
 	}
