@@ -16,7 +16,7 @@ func ValidateURL(url string) (string, bool, error) {
 		return config.HandlerBucketList, true, nil
 	}
 
-	url = strings.Trim(url, "/")
+	url = strings.TrimLeft(url, "/")
 	endPoints := strings.Split(url, "/")
 
 	switch len(endPoints) {

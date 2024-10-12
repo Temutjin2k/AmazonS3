@@ -25,7 +25,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(os.Stderr, "Error Validating URL:", err)
 		response := model.XMLResponse{
 			Status:   http.StatusNotFound,
-			Message:  "Not Found",
+			Message:  fmt.Sprintf("%v", err),
 			Resource: r.URL.Path,
 		}
 		utils.SendXmlResponse(w, response)

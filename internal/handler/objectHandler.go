@@ -49,6 +49,12 @@ func objectHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
+		if err == config.ErrObjectDoesNotExist {
+			response.Status = http.StatusBadRequest
+			response.Message = "Object does not exist"
+			response.Resource = r.URL.Path
+			utils.SendXmlResponse(w, response)
+		}
 		return
 	case http.MethodDelete:
 		response, err = deleteObject(w, bucketName, objectKey)
@@ -129,7 +135,8 @@ func uploadObject(r *http.Request, bucketName, objectKey string) (model.XMLRespo
 }
 
 func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
-	if exists, err := utils.IsObjectExist(bucketName, objectKey); !exists {
+	if exists, _ := utils.IsObjectExist(bucketName, objectKey); !exists {
+		err := config.ErrObjectDoesNotExist
 		return err
 	}
 	// Define the path to the object
