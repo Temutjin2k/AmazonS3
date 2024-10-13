@@ -192,14 +192,14 @@ func UpdateField(filepath, targetRow, col, newValue string) error {
 
 	var updatedRecords [][]string
 	// Updating records
-	for i, record := range records {
-		if len(record) > 0 && record[0] != targetRow {
-			updatedRecords = append(updatedRecords, record)
-		} else {
-			newRecord := records[i]
+	for _, record := range records {
+		if len(record) > 0 && record[0] == targetRow {
+			newRecord := make([]string, len(record))
+			copy(newRecord, record)
 			newRecord[targetCol] = newValue
 			updatedRecords = append(updatedRecords, newRecord)
-			break
+		} else {
+			updatedRecords = append(updatedRecords, record)
 		}
 	}
 

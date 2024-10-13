@@ -92,7 +92,7 @@ func deleteBucket(bucketName string) model.XMLResponse {
 	}
 
 	if !isBucketExist {
-		response.Status = http.StatusBadRequest
+		response.Status = http.StatusNotFound // 404
 		response.Message = "Bucket does not exists"
 		return response
 	}
@@ -104,8 +104,13 @@ func deleteBucket(bucketName string) model.XMLResponse {
 		response.Message = "Error deleting bucket"
 		return response
 	}
+
+	// if bucket is not empty
 	if len(col) > 1 {
-		response.Status = http.StatusBadRequest
+		// Update buckets status: marked for deletion
+		utils.UpdateField(metadataDir, bucketName, "Status", "MarkedForDeletion")
+
+		response.Status = http.StatusConflict
 		response.Message = "Bucket is not empty"
 		return response
 	}
@@ -127,7 +132,7 @@ func deleteBucket(bucketName string) model.XMLResponse {
 
 	}
 
-	response.Status = http.StatusOK
+	response.Status = http.StatusNoContent
 	response.Message = "Bucket deleted successfully"
 
 	return response

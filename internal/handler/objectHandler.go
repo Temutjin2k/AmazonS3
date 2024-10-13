@@ -81,6 +81,8 @@ func uploadObject(r *http.Request, bucketName, objectKey string) (model.XMLRespo
 		response.Message = "Error creating object"
 		return response, err
 	}
+
+	// Updating metadata
 	if exists {
 		err = utils.DeleteRow(filepath.Join(bucketPath, "objects.csv"), objectKey)
 		if err != nil {
@@ -200,7 +202,7 @@ func deleteObject(w http.ResponseWriter, bucketName, objectKey string) (model.XM
 		return response, err
 	}
 
-	response.Status = http.StatusOK
+	response.Status = http.StatusNoContent
 	response.Message = "Object deleted successfully"
 	return response, nil
 }
