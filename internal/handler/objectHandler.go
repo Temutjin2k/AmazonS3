@@ -14,59 +14,58 @@ import (
 )
 
 func objectHandler(w http.ResponseWriter, r *http.Request) {
+	// var response model.XMLResponse
+	var response model.XMLResponse
+	var err error
+	response.Status = http.StatusInternalServerError
+	response.Message = "Server Error"
+	response.Resource = r.URL.Path
+
 	// Get the bucket name and object key from the URL
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) != 2 {
 		response := model.XMLResponse{
-			Status:   http.StatusNotFound,
-			Message:  "Not Found",
-			Resource: r.URL.Path,
+			Status:  http.StatusNotFound,
+			Message: "Not Found",
 		}
 		utils.SendXmlResponse(w, response)
 		return
 	}
 	bucketName := parts[0]
 	objectKey := parts[1]
-	if exists, err := utils.IsBucketExist(bucketName); !exists {
-		fmt.Fprintln(os.Stderr, err)
+	if exists := utils.IsBucketExist(bucketName); !exists {
 		response := model.XMLResponse{
-			Status:   http.StatusBadRequest,
-			Message:  "Bucket does not exists",
-			Resource: r.URL.Path,
+			Status:  http.StatusBadRequest,
+			Message: "Bucket does not exists",
 		}
 		utils.SendXmlResponse(w, response)
 		return
 	}
 
-	// var response model.XMLResponse
-	var response model.XMLResponse
-	var err error
 	switch r.Method {
 	case http.MethodPut:
 		response, err = uploadObject(r, bucketName, objectKey)
 	case http.MethodGet:
 		err := retrieveObject(w, bucketName, objectKey)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
 		if err == config.ErrObjectDoesNotExist {
 			response.Status = http.StatusBadRequest
 			response.Message = "Object does not exist"
-			response.Resource = r.URL.Path
+			utils.SendXmlResponse(w, response)
+		} else if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			response.Status = http.StatusInternalServerError
+			response.Message = "Error retriving object"
 			utils.SendXmlResponse(w, response)
 		}
+
 		return
 	case http.MethodDelete:
-		response, err = deleteObject(w, bucketName, objectKey)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		response, err = deleteObject(bucketName, objectKey)
 	}
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-
-	response.Resource = r.URL.Path
 	utils.SendXmlResponse(w, response)
 }
 
@@ -75,16 +74,11 @@ func uploadObject(r *http.Request, bucketName, objectKey string) (model.XMLRespo
 
 	bucketPath := filepath.Join(config.Dir, bucketName)
 
-	exists, err := utils.IsObjectExist(bucketName, objectKey)
-	if err != nil {
-		response.Status = http.StatusInternalServerError
-		response.Message = "Error creating object"
-		return response, err
-	}
+	exists := utils.IsObjectExist(bucketName, objectKey)
 
 	// Updating metadata
 	if exists {
-		err = utils.DeleteRow(filepath.Join(bucketPath, "objects.csv"), objectKey)
+		err := utils.DeleteRow(filepath.Join(bucketPath, "objects.csv"), objectKey)
 		if err != nil {
 			response.Status = http.StatusInternalServerError
 			response.Message = "Error Updating metadata"
@@ -137,7 +131,7 @@ func uploadObject(r *http.Request, bucketName, objectKey string) (model.XMLRespo
 }
 
 func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
-	if exists, _ := utils.IsObjectExist(bucketName, objectKey); !exists {
+	if exists := utils.IsObjectExist(bucketName, objectKey); !exists {
 		err := config.ErrObjectDoesNotExist
 		return err
 	}
@@ -170,22 +164,23 @@ func retrieveObject(w http.ResponseWriter, bucketName, objectKey string) error {
 	return nil
 }
 
-func deleteObject(w http.ResponseWriter, bucketName, objectKey string) (model.XMLResponse, error) {
+func deleteObject(bucketName, objectKey string) (model.XMLResponse, error) {
 	var response model.XMLResponse
 
-	if exists, err := utils.IsObjectExist(bucketName, objectKey); !exists {
-		http.Error(w, "Object does not exists", http.StatusBadRequest)
+	if exists := utils.IsObjectExist(bucketName, objectKey); !exists {
 		response.Status = http.StatusBadRequest
 		response.Message = "Object does not exists"
-		return response, err
+		return response, config.ErrObjectDoesNotExist
 	}
 
+	// Deleting object
 	err := os.Remove(filepath.Join(config.Dir, bucketName, objectKey))
 	if err != nil {
 		response.Status = http.StatusInternalServerError
 		response.Message = "Error deleting object"
 		return response, err
 	}
+
 	// Updating object metadata
 	err = utils.DeleteRow(filepath.Join(config.Dir, bucketName, "objects.csv"), objectKey)
 	if err != nil {

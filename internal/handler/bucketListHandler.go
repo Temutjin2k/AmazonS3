@@ -15,18 +15,18 @@ import (
 // List All Buckets Endpoint: "/"
 func bucketListHandler(w http.ResponseWriter, r *http.Request) {
 	var response model.XMLResponse
+	response.Resource = r.URL.Path
+
 	switch r.Method {
 	case http.MethodGet:
 		response, err := listOfBuckets(w)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			response.Resource = r.URL.Path
 			utils.SendXmlResponse(w, response)
 		}
 	default:
 		response.Status = http.StatusMethodNotAllowed
 		response.Message = "Method not allowed"
-		response.Resource = r.URL.Path
 		utils.SendXmlResponse(w, response)
 	}
 }

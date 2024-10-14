@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,7 +13,12 @@ import (
 
 func bucketHandler(w http.ResponseWriter, r *http.Request) {
 	bucketName := strings.TrimLeft(r.URL.Path, "/")
+
 	var response model.XMLResponse
+	response.Status = http.StatusInternalServerError
+	response.Message = "Server Error"
+	response.Resource = r.URL.Path
+
 	switch r.Method {
 	case http.MethodPut:
 		response = createBucket(bucketName)
@@ -33,13 +37,13 @@ func createBucket(bucketName string) model.XMLResponse {
 	var response model.XMLResponse
 
 	bucketPath := filepath.Join(config.Dir, bucketName)
-	isBucketExist, err := utils.IsBucketExist(bucketName)
-	if err != nil {
-		fmt.Println(err)
-		response.Status = http.StatusInternalServerError // 500
-		response.Message = "Error creating Bucket"
-		return response
-	}
+	isBucketExist := utils.IsBucketExist(bucketName)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	response.Status = http.StatusInternalServerError // 500
+	// 	response.Message = "Error creating Bucket"
+	// 	return response
+	// }
 
 	if isBucketExist {
 		response.Status = http.StatusBadRequest
@@ -47,7 +51,7 @@ func createBucket(bucketName string) model.XMLResponse {
 		return response
 	}
 
-	err = os.Mkdir(bucketPath, 0o755) // 0755/0700 is the permission mode
+	err := os.Mkdir(bucketPath, 0o755) // 0755/0700 is the permission mode
 	if err != nil {
 		response.Status = http.StatusInternalServerError // 500
 		response.Message = "Error creating Bucket"
@@ -84,12 +88,12 @@ func deleteBucket(bucketName string) model.XMLResponse {
 
 	// Check if bucket exists
 	metadataDir := filepath.Join(config.Dir, "/buckets.csv")
-	isBucketExist, err := utils.IsBucketExist(bucketName)
-	if err != nil {
-		response.Status = http.StatusInternalServerError
-		response.Message = "Error creating Bucket"
-		return response
-	}
+	isBucketExist := utils.IsBucketExist(bucketName)
+	// if err != nil {
+	// 	response.Status = http.StatusInternalServerError
+	// 	response.Message = "Error creating Bucket"
+	// 	return response
+	// }
 
 	if !isBucketExist {
 		response.Status = http.StatusNotFound // 404

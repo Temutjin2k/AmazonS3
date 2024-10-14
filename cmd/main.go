@@ -31,7 +31,7 @@ func main() {
 	}
 
 	config.Dir = filepath.Clean(config.Dir)
-	fmt.Println("Created directory to store buckets in", config.Dir)
+	fmt.Println("Created directory to store buckets in:", config.Dir)
 
 	err := utils.MakeDir(config.Dir)
 	if err != nil {
