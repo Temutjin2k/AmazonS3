@@ -76,7 +76,7 @@ func isValidBucketName(name string) (bool, error) {
 func isValidObjectKey(objectKey string) (bool, error) {
 	// Length check
 	if len(objectKey) < 1 || len(objectKey) > 1024 {
-		return false, errors.New("object key must be between 1 and 1024 characters")
+		return false, errors.New("object key's  length must be at least 1 characters")
 	}
 
 	// Allowed characters regex
