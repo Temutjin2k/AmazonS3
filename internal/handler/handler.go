@@ -28,6 +28,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			Message:  fmt.Sprintf("%v", err),
 			Resource: r.URL.Path,
 		}
+		if err != config.ErrNotFound {
+			response.Status = http.StatusBadRequest
+		}
 		utils.SendXmlResponse(w, response)
 		return
 	}
